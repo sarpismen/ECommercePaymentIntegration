@@ -7,9 +7,11 @@ using ECommercePaymentIntegration.Domain.Entities.Product;
 
 namespace ECommercePaymentIntegration.Domain.Entities.Order
 {
-    public class OrderItem : ProductBase
-    {
-        public int Quantity { get; set; }
-        public decimal TotalPrice => Price;
-    }
+   public class OrderItem : ProductBase
+   {
+      public Guid OrderId { get; set; }
+      public int Quantity { get; set; }
+      public decimal TotalPrice => Price;
+      public Order Order { get; set; }
+   }
 }

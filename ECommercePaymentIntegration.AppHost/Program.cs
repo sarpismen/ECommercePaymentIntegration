@@ -7,10 +7,12 @@ namespace ECommercePaymentIntegration.AppHost
         {
             var builder = DistributedApplication.CreateBuilder(args);
 
-            var cache = builder.AddRedis("cache");
+            //var cache = builder.AddRedis("cache");
 
-            var apiService = builder.AddProject<Projects.ECommercePaymentIntegration_ApiService>("apiservice");
+            var sqlServer = builder.AddSqlServer("PAYINTSQL01").WithLifetime(Aspire.Hosting.ApplicationModel.ContainerLifetime.Persistent);
 
+            var sqlDb = sqlServer.AddDatabase("ECommercePaymentIntegration");
+            var apiService = builder.AddProject<Projects.ECommercePaymentIntegration_ApiService>("apiservice").WithReference(sqlDb).WaitFor(sqlDb);
             builder.Build().Run();
         }
     }

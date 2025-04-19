@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ECommercePaymentIntegration.Infrastructure\ECommercePaymentIntegration.Infrastructure.csproj" />
     <ProjectReference Include="..\ECommercePaymentIntegration.ServiceDefaults\ECommercePaymentIntegration.ServiceDefaults.csproj" />
   </ItemGroup>
 

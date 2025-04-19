@@ -12,5 +12,6 @@ namespace ECommercePaymentIntegration.Domain.Entities.Order
       public IList<OrderItem> OrderItems { get; set; }
       public OrderStatus OrderStatus { get; set; }
       public DateTime CreationTimestamp { get; set; }
+
    }
 }

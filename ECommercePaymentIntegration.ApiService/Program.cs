@@ -2,6 +2,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
+
+using Microsoft.EntityFrameworkCore.SqlServer;
+using ECommercePaymentIntegration.Infrastructure.Persistence;
+using Microsoft.Extensions.Configuration;
 
 namespace ECommercePaymentIntegration.ApiService
 {
@@ -25,6 +30,7 @@ namespace ECommercePaymentIntegration.ApiService
          {
             c.SwaggerDoc(ApiVersion, new OpenApiInfo { Title = ApiTitle, Version = ApiVersion });
          });
+         builder.Services.AddDbContext<ECommercePaymentIntegrationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("ECommercePaymentIntegration")));
 
          var app = builder.Build();
          if (app.Environment.IsDevelopment())
