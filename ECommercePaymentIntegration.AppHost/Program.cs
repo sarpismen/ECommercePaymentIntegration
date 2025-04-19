@@ -1,15 +1,17 @@
 using Aspire.Hosting;
-
-public class Program
+namespace ECommercePaymentIntegration.AppHost
 {
-    public static void Main(string[] args)
+    public class Program
     {
-        var builder = DistributedApplication.CreateBuilder(args);
+        public static void Main(string[] args)
+        {
+            var builder = DistributedApplication.CreateBuilder(args);
 
-        var cache = builder.AddRedis("cache");
+            var cache = builder.AddRedis("cache");
 
-        var apiService = builder.AddProject<Projects.ECommercePaymentIntegration_ApiService>("apiservice");
+            var apiService = builder.AddProject<Projects.ECommercePaymentIntegration_ApiService>("apiservice");
 
-        builder.Build().Run();
+            builder.Build().Run();
+        }
     }
 }

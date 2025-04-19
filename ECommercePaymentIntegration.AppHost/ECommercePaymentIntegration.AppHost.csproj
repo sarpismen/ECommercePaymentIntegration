@@ -9,6 +9,11 @@
     <UserSecretsId>049cdd6b-17d3-47f5-a418-9dc7906efded</UserSecretsId>
   </PropertyGroup>
 
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\ECommercePaymentIntegration.ApiService\ECommercePaymentIntegration.ApiService.csproj" />
   </ItemGroup>

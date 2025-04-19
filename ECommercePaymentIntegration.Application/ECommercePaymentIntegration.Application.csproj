@@ -11,11 +11,15 @@
     </PackageReference>
   </ItemGroup>
 
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
   <ItemGroup>
     <Folder Include="DTO\BalanceManagement\" />
     <Folder Include="DTO\PaymentIntegration\" />
     <Folder Include="Interfaces\" />
     <Folder Include="Services\" />
   </ItemGroup>
-
 </Project>
