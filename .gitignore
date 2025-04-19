@@ -4,3 +4,5 @@
 
 /ECommercePaymentIntegration/.vs/ECommercePaymentIntegration
 /.vs
+**/bin/
+**/obj/

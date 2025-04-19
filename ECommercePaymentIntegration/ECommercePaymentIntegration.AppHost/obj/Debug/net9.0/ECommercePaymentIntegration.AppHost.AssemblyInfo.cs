@@ -11,22 +11,10 @@
 using System;
 using System.Reflection;
 
-[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("049cdd6b-17d3-47f5-a418-9dc7906efded")]
-[assembly: System.Reflection.AssemblyMetadata("dcpclipath", "C:\\Users\\sarpi\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.0.0\\tools\\d" +
-    "cp.exe")]
-[assembly: System.Reflection.AssemblyMetadata("dcpextensionpaths", "C:\\Users\\sarpi\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.0.0\\tools\\e" +
-    "xt\\")]
-[assembly: System.Reflection.AssemblyMetadata("dcpbinpath", "C:\\Users\\sarpi\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\9.0.0\\tools\\e" +
-    "xt\\bin\\")]
-[assembly: System.Reflection.AssemblyMetadata("apphostprojectpath", "C:\\Users\\sarpi\\source\\repos\\ecommercepaymentintegration\\ECommercePaymentIntegrati" +
-    "on\\ECommercePaymentIntegration.AppHost")]
-[assembly: System.Reflection.AssemblyMetadata("apphostprojectname", "ECommercePaymentIntegration.AppHost.csproj")]
-[assembly: System.Reflection.AssemblyMetadata("aspiredashboardpath", "C:\\Users\\sarpi\\.nuget\\packages\\aspire.dashboard.sdk.win-x64\\9.0.0\\tools\\Aspire.Da" +
-    "shboard.exe")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("ECommercePaymentIntegration.AppHost")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8a9e20c94601d85ae194527c733b990b3546b89a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3525e2a58421b59b6d6937ca85eeded7473ff54e")]
 [assembly: System.Reflection.AssemblyProductAttribute("ECommercePaymentIntegration.AppHost")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ECommercePaymentIntegration.AppHost")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
