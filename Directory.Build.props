@@ -18,6 +18,9 @@
     <PackageVersion Include="Swashbuckle.AspNetCore.Swagger" Version="8.1.1" />
     <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.1" />
     <PackageVersion Include="Swashbuckle.AspNetCore.Newtonsoft" Version="8.1.1" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.4" />
+    <PackageVersion Include="Polly" Version="8.5.2" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="9.4.0" />
   </ItemGroup>
 
 </Project>
