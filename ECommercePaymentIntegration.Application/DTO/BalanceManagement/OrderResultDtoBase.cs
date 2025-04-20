@@ -7,10 +7,8 @@ using System.Threading.Tasks;
 
 namespace ECommercePaymentIntegration.Application.DTO.BalanceManagement
 {
-
-   public class PreOrderDto
+   public abstract class OrderResultDtoBase
    {
-      public OrderDto Order { get; set; }
       public UserBalanceDto UpdatedBalance { get; set; }
    }
 }

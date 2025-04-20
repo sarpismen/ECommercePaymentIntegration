@@ -8,10 +8,10 @@ namespace ECommercePaymentIntegration.Application.Interfaces.BalanceManagement
 {
    public interface IBalanceManagementService
    {
-      Task<PreOrderDto> CancelOrderAsync(CancelOrderRequest request);
-      Task<PreOrderDto> CompleteOrderAsync(CompleteOrderRequest request);
+      Task<OrderResultDto> CancelOrderAsync(CancelOrderRequest request);
+      Task<OrderResultDto> CompleteOrderAsync(CompleteOrderRequest request);
       Task<UserBalanceDto> GetBalanceAsync();
       Task<IEnumerable<ProductDto>> GetProductsAsync();
-      Task<PreOrderDto> PreorderAsync(PreorderRequest request);
+      Task<PreOrderResultDto> PreorderAsync(PreorderRequest request);
    }
 }

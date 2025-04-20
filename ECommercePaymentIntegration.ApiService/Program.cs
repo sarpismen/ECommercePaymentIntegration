@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using ECommercePaymentIntegration.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
+using System;
+using System.Text.Json.Serialization;
 
 namespace ECommercePaymentIntegration.ApiService
 {
@@ -31,7 +33,12 @@ namespace ECommercePaymentIntegration.ApiService
             c.SwaggerDoc(ApiVersion, new OpenApiInfo { Title = ApiTitle, Version = ApiVersion });
          });
          builder.Services.AddDbContext<ECommercePaymentIntegrationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("ECommercePaymentIntegration")));
-
+         builder.Services.AddHttpClient("BalanceManagementApi", client =>
+         {
+            client.BaseAddress = new Uri("https://balance-management-pi44.onrender.com");
+            // You might want to configure timeouts or other headers here
+         });
+         builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
          var app = builder.Build();
          if (app.Environment.IsDevelopment())
          {
