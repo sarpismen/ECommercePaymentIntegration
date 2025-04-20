@@ -78,7 +78,7 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
                response.EnsureSuccessStatusCode();
                string jsonContent = await response.Content.ReadAsStringAsync();
                var result = JsonConvert.DeserializeObject<Response<T>>(jsonContent, jsonSerializerSettings);
-               return result.Success ? result.Data : throw new Exception();
+               return result.Success ? result.Data : throw new BalanceManagementServiceException();
             }
             catch (HttpRequestException ex)
             {
