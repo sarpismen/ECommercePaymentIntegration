@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using ECommercePaymentIntegration.Application.DTO.BalanceManagement;
 using ECommercePaymentIntegration.Application.DTO.BalanceManagement.Requests;
 using ECommercePaymentIntegration.Application.DTO.Responses;
 using ECommercePaymentIntegration.Application.Exceptions;
 using ECommercePaymentIntegration.Application.Interfaces.BalanceManagement;
+using ECommercePaymentIntegration.Application.Json;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ECommerceApp.Infrastructure.BalanceManagement
 {
@@ -54,21 +54,15 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
 
       private async Task<T> GetAsync<T>(string endpoint)
       {
-         var settings = new JsonSerializerSettings();
-         settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-         return await HttpOperationAsync<T>(() => _httpClient.GetAsync(endpoint), settings);
+         return await HttpOperationAsync<T>(() => _httpClient.GetAsync(endpoint));
       }
 
       private async Task<TResponse> PostAsync<TRequest, TResponse>(string endpoint, TRequest request)
       {
-         var settings = new JsonSerializerSettings();
-         settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-         string jsonPayload = JsonConvert.SerializeObject(request, Formatting.Indented, settings);
-         var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-         return await HttpOperationAsync<TResponse>(() => _httpClient.PostAsync(endpoint, content), settings);
+         return await HttpOperationAsync<TResponse>(() => _httpClient.PostAsJsonAsync(endpoint, request, JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions));
       }
 
-      private async Task<T> HttpOperationAsync<T>(Func<Task<HttpResponseMessage>> action, JsonSerializerSettings jsonSerializerSettings)
+      private async Task<T> HttpOperationAsync<T>(Func<Task<HttpResponseMessage>> action)
       {
          {
             try
@@ -76,8 +70,7 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
                var response = await action();
                //Throws if error
                response.EnsureSuccessStatusCode();
-               string jsonContent = await response.Content.ReadAsStringAsync();
-               var result = JsonConvert.DeserializeObject<Response<T>>(jsonContent, jsonSerializerSettings);
+               var result = await response.Content.ReadFromJsonAsync<Response<T>>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
                return result.Success ? result.Data : throw new BalanceManagementServiceException();
             }
             catch (HttpRequestException ex)
