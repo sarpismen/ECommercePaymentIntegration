@@ -15,6 +15,7 @@ using ECommercePaymentIntegration.Domain.Entities.Order;
 using ECommercePaymentIntegration.Domain.Entities.Product;
 using ECommercePaymentIntegration.Domain.ValueObjects.Order;
 using ECommercePaymentIntegration.Infrastructure;
+using ECommercePaymentIntegration.Tests.Integration.ApplicationFactories;
 using FluentAssertions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -36,50 +37,18 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace ECommercePaymentIntegration.Tests.Integration
 {
-
-   public class TestingAspireAppHost() : DistributedApplicationFactory(typeof(Projects.ECommercePaymentIntegration_AppHost))
-   {
-      protected override void OnBuilderCreated(DistributedApplicationBuilder applicationBuilder)
-      {
-         applicationBuilder.Services.ConfigureHttpClientDefaults(clientBuilder =>
-         {
-            clientBuilder.AddStandardResilienceHandler();
-         });
-         applicationBuilder.Configuration["ApplicationDatabaseName"] = "ECommercePaymentIntegrationTest";
-         base.OnBuilderCreated(applicationBuilder);
-      }
-
-      protected override void OnBuilderCreating(DistributedApplicationOptions applicationOptions, HostApplicationBuilderSettings hostOptions)
-      {
-         base.OnBuilderCreating(applicationOptions, hostOptions);
-      }
-
-      protected override void OnBuilding(DistributedApplicationBuilder applicationBuilder)
-      {
-         base.OnBuilding(applicationBuilder);
-      }
-
-      protected override void OnBuilt(DistributedApplication application)
-      {
-         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-         application.ResourceNotifications.WaitForResourceHealthyAsync(
-                "apiservice",
-                 cts.Token);
-         base.OnBuilt(application);
-      }
-   }
    public class ECommercePaymentIntegrationTest
    {
       private string _dbConnectionString;
       private HttpClient _httpClient;
       private BalanceManagementService _balanceManagementService;
-      private TestingAspireAppHost _testHost;
+      private TestingAspireAppHostFactory _testHost;
 
       [SetUp]
       public async Task SetUp()
       {
 
-         _testHost = new TestingAspireAppHost();
+         _testHost = new TestingAspireAppHostFactory("https://balance-management-pi44.onrender.com");
 
          await _testHost.StartAsync();
          _dbConnectionString = await _testHost.GetConnectionString("ECommercePaymentIntegrationTest");
@@ -111,7 +80,7 @@ namespace ECommercePaymentIntegration.Tests.Integration
 
          var request = new CreateOrderRequest
          {
-            Items = new List<OrderItemDto> { new OrderItemDto { ProductId = product.ProductId, Quantity = 1 }, }
+            Items = new List<OrderItemDto> { new OrderItemDto { ProductId = product.ProductId, Quantity = 1 }, },
          };
 
          var balance = await _balanceManagementService.GetBalanceAsync();
@@ -145,7 +114,6 @@ namespace ECommercePaymentIntegration.Tests.Integration
          await _balanceManagementService.CancelOrderAsync(new CancelOrderRequest { OrderId = orderInfo.PreOrder.OrderId });
 
       }
-
 
       [Test]
       public async Task CompleteOrderEndpoint_CompletesPreorder_WhenInvoked()

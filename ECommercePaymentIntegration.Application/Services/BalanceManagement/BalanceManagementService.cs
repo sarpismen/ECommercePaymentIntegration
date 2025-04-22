@@ -102,7 +102,7 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
          }
          catch (HttpRequestException ex)
          {
-            var errorResponse = await response.Content.ReadFromJsonAsync<ServerErrorResponse>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
+            ServerErrorResponse errorResponse = await response.Content.ReadFromJsonAsync<ServerErrorResponse>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
             switch (ex.StatusCode)
             {
                case HttpStatusCode.NotFound:

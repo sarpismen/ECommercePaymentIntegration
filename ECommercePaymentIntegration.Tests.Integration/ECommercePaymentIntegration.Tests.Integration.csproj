@@ -8,6 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Client" />
@@ -17,6 +20,14 @@
     <PackageReference Include="NUnit.Analyzers" />
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="Aspire.Hosting.Testing" />
+    <PackageReference Include="StyleCop.Analyzers">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="WireMock.Net" />
+    <PackageReference Include="WireMock.Net.Abstractions" />
+    <PackageReference Include="WireMock.Net.Aspire"/>
+    <PackageReference Include="WireMock.Net.RestClient" />
   </ItemGroup>
 
   <ItemGroup>

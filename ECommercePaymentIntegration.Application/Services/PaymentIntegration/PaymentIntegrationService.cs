@@ -57,8 +57,10 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          }
          var allProductDtos = await _balanceManagementService.GetProductsAsync();
          var allProductsById = _mapper.Map<IEnumerable<ProductDto>, IEnumerable<Product>>(allProductDtos).ToDictionary(x => x.ProductId, x => x);
-         var order = new Order();
-         order.Status = OrderStatus.PendingPreorder;
+         var order = new Order
+         {
+            Status = OrderStatus.PendingPreorder,
+         };
          var notFoundProducts = new List<OrderItemDto>();
          var notAvailableProducts = new List<OrderItemDto>();
          foreach (var orderItemDto in req.Items)

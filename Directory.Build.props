@@ -37,6 +37,10 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4"/>
     <PackageVersion Include="FluentValidation" Version="11.11.0" />
     <PackageVersion Include="Aspire.Hosting.Testing" Version="9.2.0" />
+    <PackageVersion Include="WireMock.Net" Version="1.7.4" />
+    <PackageVersion Include="WireMock.Net.Abstractions" Version="1.7.4" />
+    <PackageVersion Include="WireMock.Net.RestClient" Version="1.7.4" />
+    <PackageVersion Include="WireMock.Net.Aspire" Version="1.7.4" />
   </ItemGroup>
 
 </Project>

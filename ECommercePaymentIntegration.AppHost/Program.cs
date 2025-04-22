@@ -14,11 +14,13 @@ namespace ECommercePaymentIntegration.AppHost
 
          var integrationTestDatabaseName = builder.Configuration.GetValue<string>("IntegrationTestSqlDatabaseName");
 
+         var balanceManagementServiceUrl = builder.Configuration.GetValue<string>("BalanceManagementServiceUrl");
          var applicationDatabaseName = builder.Configuration.GetValue<string>("ApplicationDatabaseName");
          var sqlDb = sqlServer.AddDatabase(builder.Configuration.GetValue<string>("SqlDatabaseName"));
          var integrationSqlDb = sqlServer.AddDatabase(integrationTestDatabaseName);
          var apiService = builder.AddProject<Projects.ECommercePaymentIntegration_ApiService>("apiservice")
             .WithEnvironment("SqlDatabaseName", applicationDatabaseName)
+            .WithEnvironment("BalanceManagementServiceUrl", balanceManagementServiceUrl)
             .WithReference(sqlDb)
             .WaitFor(sqlDb);
          if (applicationDatabaseName == builder.Configuration.GetValue<string>("IntegrationTestSqlDatabaseName"))
