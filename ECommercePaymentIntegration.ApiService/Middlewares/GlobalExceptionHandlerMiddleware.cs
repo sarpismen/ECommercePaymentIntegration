@@ -3,6 +3,7 @@ using System.Data;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ECommercePaymentIntegration.Application.DTO.Responses;
 using ECommercePaymentIntegration.Application.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -35,30 +36,27 @@ namespace ECommercePaymentIntegration.ApiService.Middlewares
       private async Task HandleExceptionAsync(HttpContext context, Exception exception)
       {
          HttpStatusCode statusCode = HttpStatusCode.InternalServerError;
-         string message = "An unexpected error occurred.";
-         string error = "Error";
+         var errorResponse = new ErrorResponse
+         {
+            Message = "An unexpected error occurred.",
+            Error = "Error",
+         };
          if (exception is ServiceExceptionBase service)
          {
             statusCode = service.HttpStatusCode;
-            message = service.Message;
-            error = service.Error;
+            errorResponse.Message = service.Message;
+            errorResponse.Error = service.Error;
          }
          else
          {
-            message = exception.Message;
-            error = exception.ToString();
+            errorResponse.Message = exception.Message;
+            errorResponse.Error = exception.ToString();
          }
 
-         _logger.LogError(exception, message);
+         _logger.LogError(exception, errorResponse.Message);
 
          context.Response.ContentType = "application/json";
          context.Response.StatusCode = (int)statusCode;
-
-         var errorResponse = new
-         {
-            Error = error,
-            Message = message,
-         };
 
          var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
          {

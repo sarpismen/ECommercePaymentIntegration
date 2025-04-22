@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace ECommercePaymentIntegration.Application.DTO.Responses
 {
-
-   public class NotFoundResponse : ErrorResponseBase
+   public class ErrorResponse : ErrorResponseBase
    {
+
    }
 }

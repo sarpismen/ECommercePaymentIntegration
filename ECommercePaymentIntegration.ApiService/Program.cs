@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using ECommerceApp.Infrastructure.BalanceManagement;
 using ECommercePaymentIntegration.ApiService.Middlewares;
@@ -35,6 +37,8 @@ namespace ECommercePaymentIntegration.ApiService
          builder.Services.AddSwaggerGen(c =>
          {
             c.SwaggerDoc(ApiVersion, new OpenApiInfo { Title = ApiTitle, Version = ApiVersion });
+            var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
          });
          builder.Services.AddDbContext<ECommercePaymentIntegrationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("ECommercePaymentIntegration")));
 
@@ -59,7 +63,7 @@ namespace ECommercePaymentIntegration.ApiService
             app.UseSwaggerUI(c =>
             {
                c.SwaggerEndpoint(SwaggerUrl, $"{ApiTitle} {ApiVersion}");
-               c.RoutePrefix = string.Empty;
+               c.RoutePrefix = "documentation";
             });
          }
 

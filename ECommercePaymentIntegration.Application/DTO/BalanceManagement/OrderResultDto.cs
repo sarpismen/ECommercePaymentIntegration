@@ -11,8 +11,5 @@ namespace ECommercePaymentIntegration.Application.DTO.BalanceManagement
    public class OrderResultDto : OrderResultDtoBase
    {
       public OrderStatusDto Order { get; set; }
-      public ErrorResponseBase ErrorResponse { get; set; }
-
-      public bool HasError => ErrorResponse != null;
    }
 }
