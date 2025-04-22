@@ -9,12 +9,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ECommercePaymentIntegration.Application\ECommercePaymentIntegration.Application.csproj" />
     <ProjectReference Include="..\ECommercePaymentIntegration.Infrastructure\ECommercePaymentIntegration.Infrastructure.csproj" />
     <ProjectReference Include="..\ECommercePaymentIntegration.ServiceDefaults\ECommercePaymentIntegration.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="StyleCop.Analyzers">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

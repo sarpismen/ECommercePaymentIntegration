@@ -1,5 +1,6 @@
 ﻿using ECommerceApp.Infrastructure.BalanceManagement;
 using ECommercePaymentIntegration.Application.DTO.BalanceManagement.Requests;
+using ECommercePaymentIntegration.Application.Exceptions;
 using ECommercePaymentIntegration.Application.Interfaces.BalanceManagement;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
@@ -101,8 +102,7 @@ namespace ECommercePaymentIntegration.Tests.Integration
                 OrderId = Int16.MaxValue.ToString()
             };
             var cancelCommand = async () => await _balanceManagementService.CancelOrderAsync(cancelRequest);
-            var cancelAssertion = await cancelCommand.Should().NotThrowAsync();
-            cancelAssertion.Subject.Should().BeNull();
+            var cancelAssertion = await cancelCommand.Should().ThrowAsync<NotFoundException>();
         }
         [Retry(5)]
         [Test]
@@ -113,8 +113,7 @@ namespace ECommercePaymentIntegration.Tests.Integration
                 OrderId = Int16.MaxValue.ToString()
             };
             var completeCommand = async () => await _balanceManagementService.CompleteOrderAsync(completeRequest);
-            var completeAssertion = await completeCommand.Should().NotThrowAsync();
-            completeAssertion.Subject.Should().BeNull();
+            var completeAssertion = await completeCommand.Should().ThrowAsync<NotFoundException>();
         }
     }
 }

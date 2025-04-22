@@ -9,8 +9,5 @@ namespace ECommercePaymentIntegration.Domain.Entities.Product
       public string Currency { get; set; }
       public string Category { get; set; }
       public int Stock { get; set; }
-
-      [Timestamp] // For Optimistic Concurrency
-      public byte[] RowVersion { get; set; }
    }
 }

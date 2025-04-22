@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ECommercePaymentIntegration.Application.DTO.BalanceManagement
 {
-   public class OrderDto
+   public class OrderStatusDto
    {
       public string OrderId { get; set; }
       public decimal Amount { get; set; }

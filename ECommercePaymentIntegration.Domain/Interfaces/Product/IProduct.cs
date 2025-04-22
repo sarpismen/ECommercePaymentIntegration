@@ -2,7 +2,7 @@
 {
    public interface IProduct
    {
-      string Id { get; }
-      decimal Price { get; }
+      string ProductId { get; }
+      decimal ItemPrice { get; }
    }
 }

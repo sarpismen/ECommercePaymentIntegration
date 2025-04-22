@@ -2,5 +2,10 @@
 {
    public enum OrderStatus
    {
+      PendingPreorder,
+      Failed,
+      Preordered,
+      Completed,
+      Cancelled,
    }
 }

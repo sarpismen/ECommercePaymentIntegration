@@ -13,6 +13,7 @@ using ECommercePaymentIntegration.Application.DTO.Responses;
 using ECommercePaymentIntegration.Application.Exceptions;
 using ECommercePaymentIntegration.Application.Interfaces.BalanceManagement;
 using ECommercePaymentIntegration.Application.Json;
+using ECommercePaymentIntegration.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Timeout;
@@ -21,21 +22,12 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
 {
    public class BalanceManagementService : IBalanceManagementService
    {
-      private static readonly HashSet<HttpStatusCode> RetryStatusCodes = new HashSet<HttpStatusCode>
-      {
-         HttpStatusCode.RequestTimeout, // 408
-         HttpStatusCode.InternalServerError, // 500
-         HttpStatusCode.BadGateway, // 502
-         HttpStatusCode.ServiceUnavailable, // 503
-         HttpStatusCode.GatewayTimeout, // 504
-      };
-
       private readonly HttpClient _httpClient;
       private readonly ILogger<BalanceManagementService> _logger;
 
       public BalanceManagementService(IHttpClientFactory httpClientFactory, ILogger<BalanceManagementService> logger)
       {
-         _httpClient = httpClientFactory.CreateClient("BalanceManagementApi");
+         _httpClient = httpClientFactory.CreateClient(HttpClients.BalanceManagementApi);
          _logger = logger;
       }
 
@@ -79,7 +71,7 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
          var timeoutPolicy = Policy.TimeoutAsync(TimeSpan.FromSeconds(30), TimeoutStrategy.Optimistic);
 
          var retryPolicy = Policy
-             .Handle<HttpRequestException>(ex => ex.StatusCode.HasValue && RetryStatusCodes.Contains(ex.StatusCode.Value))
+             .Handle<BalanceManagementServiceException>()
              .Or<TimeoutRejectedException>()
              .WaitAndRetryAsync(
                  retryCount: 5,
@@ -89,31 +81,36 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
                     _logger.LogInformation($"Retry #{retryAttempt} due to: {exception.Message}");
                  });
          var combinedPolicy = Policy.WrapAsync(retryPolicy, timeoutPolicy);
-         try
-         {
-            var result = await combinedPolicy.ExecuteAsync(async () => await HttpOperationAsync<T>(action));
-            return result;
-         }
-         catch (Exception ex)
-         {
-            throw new BalanceManagementServiceException("An error occured while sending request", ex);
-         }
+
+         var result = await combinedPolicy.ExecuteAsync(async () => await HttpOperationAsync<T>(action));
+         return result;
+
       }
 
       private async Task<T> HttpOperationAsync<T>(Func<Task<HttpResponseMessage>> action)
       {
+         var response = await action();
          try
          {
-            var response = await action();
             //Throws if error
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadFromJsonAsync<Response<T>>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
             return result.Success ? result.Data : throw new BalanceManagementServiceException();
          }
-         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+         catch (HttpRequestException ex)
          {
-            return default;
+            var errorResponse = await response.Content.ReadFromJsonAsync<ServerErrorResponse>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
+            switch (ex.StatusCode)
+            {
+               case HttpStatusCode.NotFound:
+                  throw new NotFoundException(errorResponse.Message, errorResponse.Error);
+               case HttpStatusCode.BadRequest:
+                  throw new BadRequestException(errorResponse.Message, errorResponse.Error);
+               default:
+                  throw new BalanceManagementServiceException(errorResponse.Message, errorResponse.Error);
+            }
          }
       }
+
    }
 }

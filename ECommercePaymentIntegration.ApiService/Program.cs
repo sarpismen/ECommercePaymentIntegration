@@ -1,15 +1,18 @@
+using System;
+using System.Text.Json.Serialization;
+using ECommerceApp.Infrastructure.BalanceManagement;
+using ECommercePaymentIntegration.Application.AutoMapper;
+using ECommercePaymentIntegration.Application.Interfaces.BalanceManagement;
+using ECommercePaymentIntegration.Application.Interfaces.PaymentIntegration;
+using ECommercePaymentIntegration.Application.Services.PaymentIntegration;
+using ECommercePaymentIntegration.Infrastructure;
+using ECommercePaymentIntegration.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Microsoft.EntityFrameworkCore;
-
-using Microsoft.EntityFrameworkCore.SqlServer;
-using ECommercePaymentIntegration.Infrastructure.Persistence;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Text.Json.Serialization;
-
 namespace ECommercePaymentIntegration.ApiService
 {
    public class Program
@@ -33,26 +36,34 @@ namespace ECommercePaymentIntegration.ApiService
             c.SwaggerDoc(ApiVersion, new OpenApiInfo { Title = ApiTitle, Version = ApiVersion });
          });
          builder.Services.AddDbContext<ECommercePaymentIntegrationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("ECommercePaymentIntegration")));
-         builder.Services.AddHttpClient("BalanceManagementApi", client =>
+
+         builder.Services.AddHttpClient(HttpClients.BalanceManagementApi, client =>
          {
             client.BaseAddress = new Uri("https://balance-management-pi44.onrender.com");
-            // You might want to configure timeouts or other headers here
          });
          builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+         builder.Services.AddAutoMapperProfiles();
+         builder.Services.AddSingleton(typeof(IOrderRepository), typeof(OrderRepository));
+         builder.Services.AddSingleton(typeof(IBalanceManagementService), typeof(BalanceManagementService));
+         builder.Services.AddSingleton(typeof(IPaymentIntegrationService), typeof(PaymentIntegrationService));
          var app = builder.Build();
          if (app.Environment.IsDevelopment())
          {
+            using var serviceScope = app.Services.CreateScope();
+            var dbContext = serviceScope.ServiceProvider.GetRequiredService<ECommercePaymentIntegrationDbContext>();
+            dbContext.Database.Migrate();
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                c.SwaggerEndpoint(SwaggerUrl, $"{ApiTitle} {ApiVersion}");
-               c.RoutePrefix = string.Empty; // Serve Swagger UI at the root
+               c.RoutePrefix = string.Empty;
             });
          }
 
          app.UseExceptionHandler();
 
          app.MapDefaultEndpoints();
+         app.MapControllers();
 
          app.Run();
       }

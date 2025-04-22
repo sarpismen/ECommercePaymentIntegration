@@ -9,6 +9,6 @@ namespace ECommercePaymentIntegration.Application.DTO.BalanceManagement
 {
    public class PreOrderResultDto : OrderResultDtoBase
    {
-      public OrderDto PreOrder { get; set; }
+      public OrderStatusDto PreOrder { get; set; }
    }
 }
