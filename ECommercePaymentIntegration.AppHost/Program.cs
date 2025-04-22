@@ -1,4 +1,5 @@
 using Aspire.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace ECommercePaymentIntegration.AppHost
 {
@@ -10,8 +11,21 @@ namespace ECommercePaymentIntegration.AppHost
 
          var sqlServer = builder.AddSqlServer("PAYINTSQL01", port: 51886).WithLifetime(Aspire.Hosting.ApplicationModel.ContainerLifetime.Persistent);
 
-         var sqlDb = sqlServer.AddDatabase("ECommercePaymentIntegration");
-         var apiService = builder.AddProject<Projects.ECommercePaymentIntegration_ApiService>("apiservice").WithReference(sqlDb).WaitFor(sqlDb);
+
+         var integrationTestDatabaseName = builder.Configuration.GetValue<string>("IntegrationTestSqlDatabaseName");
+
+         var applicationDatabaseName = builder.Configuration.GetValue<string>("ApplicationDatabaseName");
+         var sqlDb = sqlServer.AddDatabase(builder.Configuration.GetValue<string>("SqlDatabaseName"));
+         var integrationSqlDb = sqlServer.AddDatabase(integrationTestDatabaseName);
+         var apiService = builder.AddProject<Projects.ECommercePaymentIntegration_ApiService>("apiservice")
+            .WithEnvironment("SqlDatabaseName", applicationDatabaseName)
+            .WithReference(sqlDb)
+            .WaitFor(sqlDb);
+         if (applicationDatabaseName == builder.Configuration.GetValue<string>("IntegrationTestSqlDatabaseName"))
+         {
+            apiService = apiService.WithReference(integrationSqlDb)
+            .WaitFor(integrationSqlDb);
+         }
          builder.Build().Run();
       }
    }

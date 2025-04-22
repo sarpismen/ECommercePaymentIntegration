@@ -36,6 +36,7 @@
     <PackageVersion Include="AutoMapper" Version="14.0.0" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4"/>
     <PackageVersion Include="FluentValidation" Version="11.11.0" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="9.2.0" />
   </ItemGroup>
 
 </Project>

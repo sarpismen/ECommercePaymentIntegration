@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using ECommercePaymentIntegration.Application.DTO.Responses;
 using ECommercePaymentIntegration.Application.Exceptions;
+using ECommercePaymentIntegration.Application.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -58,11 +59,7 @@ namespace ECommercePaymentIntegration.ApiService.Middlewares
          context.Response.ContentType = "application/json";
          context.Response.StatusCode = (int)statusCode;
 
-         var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
-         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-         });
-         await context.Response.WriteAsync(jsonResponse);
+         await context.Response.WriteAsJsonAsync(errorResponse);
       }
    }
 }

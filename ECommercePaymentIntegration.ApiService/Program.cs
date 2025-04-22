@@ -45,11 +45,12 @@ namespace ECommercePaymentIntegration.ApiService
             var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
          });
-         builder.Services.AddDbContext<ECommercePaymentIntegrationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("ECommercePaymentIntegration")));
-
+         var sqlDatabaseName = builder.Configuration.GetValue<string>("SqlDatabaseName");
+         builder.Services.AddDbContext<ECommercePaymentIntegrationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString(sqlDatabaseName)));
+         var balanceManagementServiceurl = builder.Configuration.GetValue<string>("BalanceManagementServiceUrl");
          builder.Services.AddHttpClient(HttpClients.BalanceManagementApi, client =>
          {
-            client.BaseAddress = new Uri("https://balance-management-pi44.onrender.com");
+            client.BaseAddress = new Uri(balanceManagementServiceurl);
             client.Timeout = TimeSpan.FromSeconds(30);
          });
          builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -61,12 +62,12 @@ namespace ECommercePaymentIntegration.ApiService
          builder.Services.AddSingleton(typeof(IBalanceManagementService), typeof(BalanceManagementService));
          builder.Services.AddSingleton(typeof(IPaymentIntegrationService), typeof(PaymentIntegrationService));
          var app = builder.Build();
+         using var serviceScope = app.Services.CreateScope();
+         var dbContext = serviceScope.ServiceProvider.GetRequiredService<ECommercePaymentIntegrationDbContext>();
+         dbContext.Database.Migrate();
          app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
          if (app.Environment.IsDevelopment())
          {
-            using var serviceScope = app.Services.CreateScope();
-            var dbContext = serviceScope.ServiceProvider.GetRequiredService<ECommercePaymentIntegrationDbContext>();
-            dbContext.Database.Migrate();
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
