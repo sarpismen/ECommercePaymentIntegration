@@ -19,12 +19,31 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
                     CompletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     LastUpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    Error = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Status = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Orders", x => x.OrderId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OrderErrors",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    OrderId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    Error = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderErrors", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrderErrors_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "OrderId");
                 });
 
             migrationBuilder.CreateTable(
@@ -49,6 +68,11 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_OrderErrors_OrderId",
+                table: "OrderErrors",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_OrderItems_OrderId",
                 table: "OrderItems",
                 column: "OrderId");
@@ -57,6 +81,9 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "OrderErrors");
+
             migrationBuilder.DropTable(
                 name: "OrderItems");
 

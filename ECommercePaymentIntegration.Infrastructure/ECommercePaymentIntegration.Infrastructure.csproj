@@ -26,4 +26,8 @@
     <ProjectReference Include="..\ECommercePaymentIntegration.Domain\ECommercePaymentIntegration.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

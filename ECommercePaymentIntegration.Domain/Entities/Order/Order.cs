@@ -20,6 +20,6 @@ namespace ECommercePaymentIntegration.Domain.Entities.Order
       [NotMapped]
       public decimal Total => OrderItems.Sum(x => x.SubTotal);
 
-      public string Error { get; set; }
+      public IList<OrderError> OrderErrors { get; set; } = new List<OrderError>();
    }
 }

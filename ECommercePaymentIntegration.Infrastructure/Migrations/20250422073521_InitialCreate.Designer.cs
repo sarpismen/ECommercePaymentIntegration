@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECommercePaymentIntegration.Infrastructure.Migrations
 {
     [DbContext(typeof(ECommercePaymentIntegrationDbContext))]
-    [Migration("20250422065004_InitialCreate")]
+    [Migration("20250422073521_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -36,9 +36,6 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("Error")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTimeOffset?>("LastUpdatedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -48,6 +45,30 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
                     b.HasKey("OrderId");
 
                     b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("ECommercePaymentIntegration.Domain.Entities.Order.OrderError", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrderId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("OrderErrors");
                 });
 
             modelBuilder.Entity("ECommercePaymentIntegration.Domain.Entities.Order.OrderItem", b =>
@@ -77,6 +98,15 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("ECommercePaymentIntegration.Domain.Entities.Order.OrderError", b =>
+                {
+                    b.HasOne("ECommercePaymentIntegration.Domain.Entities.Order.Order", "Order")
+                        .WithMany("OrderErrors")
+                        .HasForeignKey("OrderId");
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("ECommercePaymentIntegration.Domain.Entities.Order.OrderItem", b =>
                 {
                     b.HasOne("ECommercePaymentIntegration.Domain.Entities.Order.Order", "Order")
@@ -88,6 +118,8 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
 
             modelBuilder.Entity("ECommercePaymentIntegration.Domain.Entities.Order.Order", b =>
                 {
+                    b.Navigation("OrderErrors");
+
                     b.Navigation("OrderItems");
                 });
 #pragma warning restore 612, 618

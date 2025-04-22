@@ -72,7 +72,7 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
             order.OrderItems.Add(orderItem);
          }
 
-         if (notAvailableProducts.Any())
+         if (notFoundProducts.Any())
          {
             throw new NotFoundException("Some entered products doesn't exist", string.Join(",", notFoundProducts.Select(x => x.ProductId)));
          }
@@ -99,7 +99,7 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          {
             order.Status = OrderStatus.Failed;
             order.LastUpdatedAt = DateTime.UtcNow;
-            order.Error = ex.Message;
+            order.OrderErrors.Add(new OrderError { Error = ex.Message });
             await _orderRepository.UpdateAsync(order);
             throw;
          }
@@ -112,18 +112,18 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
             (Func<CancellationToken, Task<OrderResultDtoBase>>)(async (ct) =>
             {
                var cancelOrderResult = await _balanceManagementService.CancelOrderAsync(new CancelOrderRequest { OrderId = completeOrderRequest.OrderId });
-               await UpdateRecord(completeOrderRequest.OrderId, OrderStatus.Cancelled);
+               await UpdateOrderStatus(completeOrderRequest.OrderId, OrderStatus.Cancelled);
                return cancelOrderResult;
             }),
             async (exception) =>
-         {
-            _logger.LogError($"Error while completing order {completeOrderRequest.OrderId}, cancelling the order", exception);
-            //Update status
-         });
+            {
+               await AddErrorToExistingOrder(completeOrderRequest.OrderId, exception);
+               _logger.LogError($"Error while completing order {completeOrderRequest.OrderId}, cancelling the order", exception);
+            });
          var completeResult = await fallbackPolicy.ExecuteAndCaptureAsync(async () =>
          {
             OrderResultDto completeOrderResult = await _balanceManagementService.CompleteOrderAsync(completeOrderRequest);
-            await UpdateRecord(completeOrderRequest.OrderId, OrderStatus.Completed);
+            await UpdateOrderStatus(completeOrderRequest.OrderId, OrderStatus.Completed);
             return completeOrderResult;
          });
 
@@ -135,7 +135,19 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          return (OrderResultDtoBase)completeResult.Context["FallbackResult"];
       }
 
-      private async Task UpdateRecord(string orderId, OrderStatus status)
+      private async Task AddErrorToExistingOrder(string orderId, DelegateResult<OrderResultDtoBase> exception)
+      {
+         var record = await _orderRepository.GetByIdAsync(orderId);
+         if (record == null)
+         {
+            _logger.LogCritical($"Record {orderId} is not found in the DB. There could be inconsistencies");
+            return;
+         }
+
+         record.OrderErrors.Add(new OrderError { Error = exception.Exception.Message });
+      }
+
+      private async Task UpdateOrderStatus(string orderId, OrderStatus status)
       {
          var record = await _orderRepository.GetByIdAsync(orderId);
          if (record == null)
@@ -149,7 +161,6 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
             record.CompletedAt = DateTimeOffset.UtcNow;
          }
          await _orderRepository.UpdateAsync(record);
-
       }
    }
 }

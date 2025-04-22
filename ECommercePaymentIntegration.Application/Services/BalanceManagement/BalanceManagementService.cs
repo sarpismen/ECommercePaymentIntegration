@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -24,6 +25,14 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
    {
       private readonly HttpClient _httpClient;
       private readonly ILogger<BalanceManagementService> _logger;
+      private static IEnumerable<HttpStatusCode> TimeoutStatusCodes
+      {
+         get
+         {
+            yield return HttpStatusCode.GatewayTimeout;
+            yield return HttpStatusCode.RequestTimeout;
+         }
+      }
 
       public BalanceManagementService(IHttpClientFactory httpClientFactory, ILogger<BalanceManagementService> logger)
       {
@@ -68,21 +77,16 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
 
       private async Task<T> ResilientHttpOperationAsync<T>(Func<Task<HttpResponseMessage>> action)
       {
-         var timeoutPolicy = Policy.TimeoutAsync(TimeSpan.FromSeconds(30), TimeoutStrategy.Optimistic);
-
          var retryPolicy = Policy
-             .Handle<BalanceManagementServiceException>()
-             .Or<TimeoutRejectedException>()
+             .Handle<BalanceManagementServiceException>(x => !TimeoutStatusCodes.Contains(x.HttpStatusCode))
              .WaitAndRetryAsync(
-                 retryCount: 5,
-                 sleepDurationProvider: attempt => attempt > 2 ? TimeSpan.FromSeconds(Math.Pow(2, attempt - 2)) : TimeSpan.Zero,
+                 retryCount: 3,
+                 sleepDurationProvider: attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
                  onRetry: (exception, timespan, retryAttempt, context) =>
                  {
                     _logger.LogInformation($"Retry #{retryAttempt} due to: {exception.Message}");
                  });
-         var combinedPolicy = Policy.WrapAsync(retryPolicy, timeoutPolicy);
-
-         var result = await combinedPolicy.ExecuteAsync(async () => await HttpOperationAsync<T>(action));
+         var result = await retryPolicy.ExecuteAsync(async () => await HttpOperationAsync<T>(action));
          return result;
 
       }
@@ -92,7 +96,6 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
          var response = await action();
          try
          {
-            //Throws if error
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadFromJsonAsync<Response<T>>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
             return result.Success ? result.Data : throw new BalanceManagementServiceException();
@@ -103,11 +106,11 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
             switch (ex.StatusCode)
             {
                case HttpStatusCode.NotFound:
-                  throw new NotFoundException(errorResponse.Message, errorResponse.Error);
+                  throw new NotFoundException($"Balance management service threw an error: {errorResponse.Message}", errorResponse.Error);
                case HttpStatusCode.BadRequest:
-                  throw new BadRequestException(errorResponse.Message, errorResponse.Error);
+                  throw new BadRequestException($"Balance management service threw an error: {errorResponse.Message}", errorResponse.Error);
                default:
-                  throw new BalanceManagementServiceException(errorResponse.Message, errorResponse.Error);
+                  throw new BalanceManagementServiceException(ex.StatusCode ?? HttpStatusCode.InternalServerError, $"Balance management service threw an error: {errorResponse.Message}", errorResponse.Error);
             }
          }
       }

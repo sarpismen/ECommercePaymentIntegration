@@ -1,27 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
+using System.Net;
 
 namespace ECommercePaymentIntegration.Application.Exceptions
 {
    public class NotFoundException : ServiceExceptionBase
    {
-      public NotFoundException()
+      public NotFoundException() : base(HttpStatusCode.NotFound)
       {
       }
 
-      public NotFoundException(string message) : base(message)
+      public NotFoundException(string message) : base(HttpStatusCode.NotFound, message)
       {
       }
 
-      public NotFoundException(string message, string error) : base(message, error)
+      public NotFoundException(string message, string error) : base(HttpStatusCode.NotFound, message, error)
       {
       }
 
-      public NotFoundException(string message, Exception innerException) : base(message, innerException)
+      public NotFoundException(string message, Exception innerException) : base(HttpStatusCode.NotFound, message, innerException)
       {
       }
    }

@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json.Serialization;
 using ECommerceApp.Infrastructure.BalanceManagement;
+using ECommercePaymentIntegration.ApiService.Middlewares;
 using ECommercePaymentIntegration.Application.AutoMapper;
 using ECommercePaymentIntegration.Application.Interfaces.BalanceManagement;
 using ECommercePaymentIntegration.Application.Interfaces.PaymentIntegration;
@@ -40,6 +41,7 @@ namespace ECommercePaymentIntegration.ApiService
          builder.Services.AddHttpClient(HttpClients.BalanceManagementApi, client =>
          {
             client.BaseAddress = new Uri("https://balance-management-pi44.onrender.com");
+            client.Timeout = TimeSpan.FromSeconds(30);
          });
          builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
          builder.Services.AddAutoMapperProfiles();
@@ -47,6 +49,7 @@ namespace ECommercePaymentIntegration.ApiService
          builder.Services.AddSingleton(typeof(IBalanceManagementService), typeof(BalanceManagementService));
          builder.Services.AddSingleton(typeof(IPaymentIntegrationService), typeof(PaymentIntegrationService));
          var app = builder.Build();
+         app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
          if (app.Environment.IsDevelopment())
          {
             using var serviceScope = app.Services.CreateScope();
@@ -59,8 +62,6 @@ namespace ECommercePaymentIntegration.ApiService
                c.RoutePrefix = string.Empty;
             });
          }
-
-         app.UseExceptionHandler();
 
          app.MapDefaultEndpoints();
          app.MapControllers();
