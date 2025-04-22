@@ -5,12 +5,17 @@ using System.Text.Json.Serialization;
 using ECommerceApp.Infrastructure.BalanceManagement;
 using ECommercePaymentIntegration.ApiService.Middlewares;
 using ECommercePaymentIntegration.Application.AutoMapper;
+using ECommercePaymentIntegration.Application.DTO.BalanceManagement.Requests;
+using ECommercePaymentIntegration.Application.DTO.PaymentIntegration.Requests;
 using ECommercePaymentIntegration.Application.Interfaces.BalanceManagement;
 using ECommercePaymentIntegration.Application.Interfaces.PaymentIntegration;
 using ECommercePaymentIntegration.Application.Services.PaymentIntegration;
+using ECommercePaymentIntegration.Application.Validators;
 using ECommercePaymentIntegration.Infrastructure;
 using ECommercePaymentIntegration.Infrastructure.Persistence;
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -50,6 +55,9 @@ namespace ECommercePaymentIntegration.ApiService
          builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
          builder.Services.AddAutoMapperProfiles();
          builder.Services.AddSingleton(typeof(IOrderRepository), typeof(OrderRepository));
+
+         builder.Services.AddSingleton<IValidator<CompleteOrderRequest>, CompleteOrderRequestValidator>();
+         builder.Services.AddSingleton<IValidator<CreateOrderRequest>, CreateOrderRequestValidator>();
          builder.Services.AddSingleton(typeof(IBalanceManagementService), typeof(BalanceManagementService));
          builder.Services.AddSingleton(typeof(IPaymentIntegrationService), typeof(PaymentIntegrationService));
          var app = builder.Build();

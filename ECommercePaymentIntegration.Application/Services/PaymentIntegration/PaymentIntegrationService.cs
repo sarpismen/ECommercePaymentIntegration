@@ -15,6 +15,7 @@ using ECommercePaymentIntegration.Domain.Entities.Order;
 using ECommercePaymentIntegration.Domain.Entities.Product;
 using ECommercePaymentIntegration.Domain.ValueObjects.Order;
 using ECommercePaymentIntegration.Infrastructure.Persistence;
+using FluentValidation;
 using Microsoft.Extensions.Logging;
 using Polly;
 
@@ -26,13 +27,17 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
       private readonly IMapper _mapper;
       private readonly ILogger<PaymentIntegrationService> _logger;
       private readonly IOrderRepository _orderRepository;
+      private readonly IValidator<CompleteOrderRequest> _completeOrderRequestValidator;
+      private readonly IValidator<CreateOrderRequest> _createOrderRequestValidator;
 
-      public PaymentIntegrationService(IBalanceManagementService balanceManagementService, IOrderRepository orderRepository, IMapper mapper, ILogger<PaymentIntegrationService> logger)
+      public PaymentIntegrationService(IBalanceManagementService balanceManagementService, IOrderRepository orderRepository, IMapper mapper, ILogger<PaymentIntegrationService> logger, IValidator<CompleteOrderRequest> completeOrderRequestValidator, IValidator<CreateOrderRequest> createOrderRequestValidator)
       {
          _balanceManagementService = balanceManagementService;
          _mapper = mapper;
          _logger = logger;
          _orderRepository = orderRepository;
+         _completeOrderRequestValidator = completeOrderRequestValidator;
+         _createOrderRequestValidator = createOrderRequestValidator;
       }
 
       public async Task<IEnumerable<Product>> GetProducts()
@@ -45,6 +50,11 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
 
       public async Task<PreOrderResultDto> CreateOrder(CreateOrderRequest req)
       {
+         var validation = _createOrderRequestValidator.Validate(req);
+         if (!validation.IsValid)
+         {
+            throw new BadRequestException("Invalid request", validation.ToString(";"));
+         }
          var allProductDtos = await _balanceManagementService.GetProductsAsync();
          var allProductsById = _mapper.Map<IEnumerable<ProductDto>, IEnumerable<Product>>(allProductDtos).ToDictionary(x => x.ProductId, x => x);
          var order = new Order();
@@ -107,7 +117,11 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
 
       public async Task<OrderResultDtoBase> CompleteOrder(CompleteOrderRequest completeOrderRequest)
       {
-         //Update status
+         var validation = _completeOrderRequestValidator.Validate(completeOrderRequest);
+         if (!validation.IsValid)
+         {
+            throw new BadRequestException("Invalid request", validation.ToString(";"));
+         }
          var fallbackPolicy = Policy<OrderResultDtoBase>.Handle<BalanceManagementServiceException>().FallbackAsync(
             (Func<CancellationToken, Task<OrderResultDtoBase>>)(async (ct) =>
             {
@@ -127,12 +141,7 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
             return completeOrderResult;
          });
 
-         if (completeResult.Outcome == OutcomeType.Successful)
-         {
-            return completeResult.Result;
-         }
-
-         return (OrderResultDtoBase)completeResult.Context["FallbackResult"];
+         return completeResult.Result;
       }
 
       private async Task AddErrorToExistingOrder(string orderId, DelegateResult<OrderResultDtoBase> exception)
