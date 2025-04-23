@@ -55,11 +55,9 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
 
          Order order = await CreateOrderObjectAsync(req);
 
-         await _orderRepository.AddAsync(order);
-
          try
          {
-            return await PreorderAsync(order);
+            return await PreorderAsync(new PreorderRequest { Amount = order.Total, OrderId = order.OrderId });
          }
          catch (Exception ex)
          {
@@ -68,10 +66,23 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
                serviceException.OrderId = order.OrderId;
             }
 
-            order.Status = OrderStatus.Failed;
-            order.OrderErrors.Add(new OrderError { Error = ex.Message });
-            await _orderRepository.UpdateAsync(order);
+            await SetFailedStatus(order.OrderId, ex.Message);
             throw;
+         }
+      }
+
+      private async Task SetFailedStatus(string orderId, string exceptionMessage)
+      {
+         var order = await _orderRepository.GetByIdAsync(orderId);
+         if (order != null)
+         {
+            order.Status = OrderStatus.Failed;
+            order.OrderErrors.Add(new OrderError { Error = exceptionMessage });
+            await _orderRepository.UpdateAsync(order);
+         }
+         else
+         {
+            _logger.LogCritical($"Preorder {orderId} cannot be found in the Database, there might be inconsistencies");
          }
       }
 
@@ -121,12 +132,20 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          return cancelOrderResult;
       }
 
-      private async Task<PreOrderResultDto> PreorderAsync(Order order)
+      private async Task<PreOrderResultDto> PreorderAsync(PreorderRequest preorder)
       {
-         var preorderResult = await _balanceManagementService.PreorderAsync(new PreorderRequest { Amount = order.Total, OrderId = order.OrderId });
+         var preorderResult = await _balanceManagementService.PreorderAsync(preorder);
 
-         order.Status = OrderStatus.Preordered;
-         order.LastUpdatedAt = DateTime.UtcNow;
+         var order = await _orderRepository.GetByIdAsync(preorder.OrderId);
+         if (order != null)
+         {
+            order.Status = OrderStatus.Preordered;
+            order.LastUpdatedAt = DateTime.UtcNow;
+         }
+         else
+         {
+            _logger.LogCritical($"Preorder {preorder.OrderId} cannot be found in the Database, there might be inconsistencies");
+         }
 
          await _orderRepository.UpdateAsync(order);
 
@@ -173,7 +192,7 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          {
             throw new OutOfStockException("These products are out of stock", string.Join(",", notAvailableProducts.Select(x => x.ProductId)));
          }
-
+         await _orderRepository.AddAsync(order);
          return order;
       }
 

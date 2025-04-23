@@ -59,7 +59,7 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
       public async Task CompleteOrder_WhenThrowsNotFound_ShouldRethrow()
       {
          _balanceManagementServiceMock.Setup(x => x.CompleteOrderAsync(It.IsAny<CompleteOrderRequest>())).ThrowsAsync(new NotFoundException());
-         var completeOrderAct = () => _paymentIntegrationService.CompleteOrder(new CompleteOrderRequest { OrderId = "1" });
+         var completeOrderAct = async () => await _paymentIntegrationService.CompleteOrder(new CompleteOrderRequest { OrderId = "1" });
          await completeOrderAct.Should().ThrowAsync<NotFoundException>();
          _balanceManagementServiceMock.Verify(x => x.CancelOrderAsync(It.IsAny<CancelOrderRequest>()), Times.Never());
       }
@@ -68,7 +68,7 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
       public async Task CompleteOrder_WhenThrowsBadRequest_ShouldRethrow()
       {
          _balanceManagementServiceMock.Setup(x => x.CompleteOrderAsync(It.IsAny<CompleteOrderRequest>())).ThrowsAsync(new BadRequestException());
-         var completeOrderAct = () => _paymentIntegrationService.CompleteOrder(new CompleteOrderRequest { OrderId = "1" });
+         var completeOrderAct = async () => await _paymentIntegrationService.CompleteOrder(new CompleteOrderRequest { OrderId = "1" });
          await completeOrderAct.Should().ThrowAsync<BadRequestException>();
          _balanceManagementServiceMock.Verify(x => x.CancelOrderAsync(It.IsAny<CancelOrderRequest>()), Times.Never());
       }
@@ -76,23 +76,23 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
       [Test]
       public async Task CreateOrder_WhenThrowsBadRequest_ShouldRethrowAndUpdateDbToFailed()
       {
-         Order addedOrder = null;
+         Order updateOrder = null;
+         _orderRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>())).ReturnsAsync(() => new Order { Status = OrderStatus.PendingPreorder });
+         _orderRepositoryMock.Setup(x => x.UpdateAsync(It.IsAny<Order>())).Callback<Order>(cb => updateOrder = cb);
          _balanceManagementServiceMock.Setup(x => x.PreorderAsync(It.IsAny<PreorderRequest>())).ThrowsAsync(new BadRequestException());
          _balanceManagementServiceMock.Setup(x => x.GetProductsAsync()).ReturnsAsync(new List<ProductDto>() { new ProductDto { Id = "a", Stock = 1, Price = 1 } });
-         _orderRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Order>())).Callback<Order>((order) => addedOrder = order);
-         var createOrderAct = () => _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
+         var createOrderAct = async () => await _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
          await createOrderAct.Should().ThrowAsync<BadRequestException>();
-         _orderRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Order>()), Times.Once);
          _orderRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Order>()), Times.Once);
-         addedOrder.Should().NotBeNull();
-         addedOrder.Status.Should().Be(OrderStatus.Failed);
+         updateOrder.Should().NotBeNull();
+         updateOrder.Status.Should().Be(OrderStatus.Failed);
       }
 
       [Test]
       public async Task CreateOrder_WhenStockIsInsufficient_ThrowsOutOfStockException()
       {
          _balanceManagementServiceMock.Setup(x => x.GetProductsAsync()).ReturnsAsync(new List<ProductDto>() { new ProductDto { Id = "a", Stock = 0, Price = 1 } });
-         var createOrderAct = () => _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
+         var createOrderAct = async () => await _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
          await createOrderAct.Should().ThrowAsync<OutOfStockException>();
       }
 
@@ -100,8 +100,44 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
       public async Task CreateOrder_ProductDoesntExist_ThrowsNotFoundException()
       {
          _balanceManagementServiceMock.Setup(x => x.GetProductsAsync()).ReturnsAsync(new List<ProductDto>() { new ProductDto { Id = "a", Stock = 1, Price = 1 } });
-         var createOrderAct = () => _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "b", Quantity = 1 } } });
+         var createOrderAct = async () => await _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "b", Quantity = 1 } } });
          await createOrderAct.Should().ThrowAsync<NotFoundException>();
       }
+
+      [Test]
+      public async Task CreateOrder_WhenInvoked_ShouldReturnResponse()
+      {
+         Order updateOrder = null;
+         Order addOrder = null;
+         _balanceManagementServiceMock.Setup(x => x.PreorderAsync(It.IsAny<PreorderRequest>())).ReturnsAsync(() => new PreOrderResultDto { PreOrder = new OrderStatusDto(), UpdatedBalance = new UserBalanceDto()});
+         _orderRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>())).ReturnsAsync(() => new Order { Status = OrderStatus.Preordered });
+         _orderRepositoryMock.Setup(x => x.UpdateAsync(It.IsAny<Order>())).Callback<Order>(cb => updateOrder = cb );
+         _orderRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Order>())).Callback<Order>(cb => addOrder = cb); ;
+         _balanceManagementServiceMock.Setup(x => x.GetProductsAsync()).ReturnsAsync(new List<ProductDto>() { new ProductDto { Id = "a", Stock = 1, Price = 1 } });
+         var response = await _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
+
+         _orderRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Order>()), Times.Once);
+         _orderRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Order>()), Times.Once);
+         _balanceManagementServiceMock.Verify(x => x.PreorderAsync(It.IsAny<PreorderRequest>()), Times.Once);
+         updateOrder.Should().NotBeNull();
+         updateOrder.Status.Should().Be(OrderStatus.Preordered);
+         addOrder.Should().NotBeNull();
+         addOrder.Status.Should().Be(OrderStatus.PendingPreorder);
+         response.Should().NotBeNull();
+      }
+      [Test]
+      public async Task CompleteOrder_WhenInvoked_ShouldUpdateOrder()
+      {
+         Order savedOrder = null;
+         _balanceManagementServiceMock.Setup(x => x.CompleteOrderAsync(It.IsAny<CompleteOrderRequest>())).ReturnsAsync(() => new OrderResultDto() { Order = new OrderStatusDto(), UpdatedBalance = new UserBalanceDto()});
+         _orderRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>())).ReturnsAsync(() => new Order { Status = OrderStatus.Preordered });
+         _orderRepositoryMock.Setup(x => x.UpdateAsync(It.IsAny<Order>())).Callback<Order>((order) => savedOrder = order);
+         await _paymentIntegrationService.CompleteOrder(new CompleteOrderRequest { OrderId = "bunuyaparkendepremoldu" });
+         _balanceManagementServiceMock.Verify(x => x.CompleteOrderAsync(It.IsAny<CompleteOrderRequest>()), Times.Once());
+         _orderRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Order>()), Times.Once);
+         savedOrder.Should().NotBeNull();
+         savedOrder.Status.Should().Be(OrderStatus.Completed);
+      }
+
    }
 }
