@@ -1,7 +1,7 @@
 ﻿<RunSettings>
   <DataCollectionRunSettings>
     <DataCollectors>
-      <DataCollector friendlyName="UnitTestCodeCoverage">
+      <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
           <ExcludeByFile>**/Program.cs</ExcludeByFile>
         </Configuration>
