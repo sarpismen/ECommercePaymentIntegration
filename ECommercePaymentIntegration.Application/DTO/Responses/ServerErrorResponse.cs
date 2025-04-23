@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace ECommercePaymentIntegration.Application.DTO.Responses
 {
-
    public class ServerErrorResponse : ErrorResponseBase
    {
    }

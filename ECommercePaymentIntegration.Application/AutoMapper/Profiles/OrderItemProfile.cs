@@ -1,13 +1,6 @@
 ﻿using AutoMapper;
-using ECommercePaymentIntegration.Application.DTO.BalanceManagement;
 using ECommercePaymentIntegration.Application.DTO.PaymentIntegration;
 using ECommercePaymentIntegration.Domain.Entities.Order;
-using ECommercePaymentIntegration.Domain.Entities.Product;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ECommercePaymentIntegration.Application.AutoMapper.Profiles
 {

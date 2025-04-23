@@ -15,7 +15,6 @@ using ECommercePaymentIntegration.Infrastructure;
 using ECommercePaymentIntegration.Infrastructure.Persistence;
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

@@ -12,7 +12,6 @@ using ECommercePaymentIntegration.Application.Exceptions;
 using ECommercePaymentIntegration.Application.Interfaces.BalanceManagement;
 using ECommercePaymentIntegration.Application.Interfaces.PaymentIntegration;
 using ECommercePaymentIntegration.Domain.Entities.Order;
-using ECommercePaymentIntegration.Domain.Entities.Product;
 using ECommercePaymentIntegration.Domain.ValueObjects.Order;
 using ECommercePaymentIntegration.Infrastructure.Persistence;
 using FluentValidation;
@@ -40,12 +39,11 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          _createOrderRequestValidator = createOrderRequestValidator;
       }
 
-      public async Task<IEnumerable<Product>> GetProducts()
+      public async Task<IEnumerable<ProductDto>> GetProducts()
       {
          var allProductDtos = await _balanceManagementService.GetProductsAsync();
          var availableProductDtos = allProductDtos.Where(x => x.Stock > 0);
-         var availableProducts = _mapper.Map<IEnumerable<ProductDto>, IEnumerable<Product>>(availableProductDtos);
-         return availableProducts;
+         return availableProductDtos;
       }
 
       public async Task<PreOrderResultDto> CreateOrder(CreateOrderRequest req)
@@ -55,8 +53,9 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          {
             throw new BadRequestException("Invalid request", validation.ToString(";"));
          }
+
          var allProductDtos = await _balanceManagementService.GetProductsAsync();
-         var allProductsById = _mapper.Map<IEnumerable<ProductDto>, IEnumerable<Product>>(allProductDtos).ToDictionary(x => x.ProductId, x => x);
+         var allProductsById = allProductDtos.ToDictionary(x => x.Id, x => x);
          var order = new Order
          {
             Status = OrderStatus.PendingPreorder,
@@ -79,7 +78,7 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
 
             var orderItem = _mapper.Map<OrderItemDto, OrderItem>(orderItemDto);
             orderItem.Order = order;
-            orderItem.ItemPrice = product.ItemPrice;
+            orderItem.UnitPrice = product.Price;
             orderItem.OrderId = order.OrderId;
             order.OrderItems.Add(orderItem);
          }
@@ -91,7 +90,7 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
 
          if (notAvailableProducts.Any())
          {
-            throw new NotFoundException("These products are out of stock", string.Join(",", notAvailableProducts.Select(x => x.ProductId)));
+            throw new OutOfStockException("These products are out of stock", string.Join(",", notAvailableProducts.Select(x => x.ProductId)));
          }
 
          await _orderRepository.AddAsync(order);
@@ -109,8 +108,12 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          }
          catch (Exception ex)
          {
+            if (ex is ServiceExceptionBase serviceException)
+            {
+               serviceException.OrderId = order.OrderId;
+            }
+
             order.Status = OrderStatus.Failed;
-            order.LastUpdatedAt = DateTime.UtcNow;
             order.OrderErrors.Add(new OrderError { Error = ex.Message });
             await _orderRepository.UpdateAsync(order);
             throw;
@@ -124,6 +127,7 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          {
             throw new BadRequestException("Invalid request", validation.ToString(";"));
          }
+
          var fallbackPolicy = Policy<OrderResultDtoBase>.Handle<BalanceManagementServiceException>().FallbackAsync(
             (Func<CancellationToken, Task<OrderResultDtoBase>>)(async (_) =>
             {
@@ -144,8 +148,15 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          });
          if (completeResult.Outcome == OutcomeType.Failure)
          {
-            throw completeResult.FinalException;
+            Exception finalException = completeResult.FinalException;
+            if (finalException is ServiceExceptionBase serviceException)
+            {
+               serviceException.OrderId = completeOrderRequest.OrderId;
+            }
+
+            throw finalException;
          }
+
          return completeResult.Result;
       }
 
@@ -169,11 +180,13 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
             _logger.LogCritical($"Record {orderId} is not found in the DB. There could be inconsistencies");
             return;
          }
+
          record.Status = status;
          if (record.Status == OrderStatus.Completed)
          {
             record.CompletedAt = DateTimeOffset.UtcNow;
          }
+
          await _orderRepository.UpdateAsync(record);
       }
    }

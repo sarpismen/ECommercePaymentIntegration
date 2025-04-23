@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Data;
 using System.Net;
-using System.Text.Json;
 using System.Threading.Tasks;
 using ECommercePaymentIntegration.Application.DTO.Responses;
 using ECommercePaymentIntegration.Application.Exceptions;
-using ECommercePaymentIntegration.Application.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
@@ -47,6 +44,7 @@ namespace ECommercePaymentIntegration.ApiService.Middlewares
             statusCode = service.HttpStatusCode;
             errorResponse.Message = service.Message;
             errorResponse.Error = service.Error;
+            errorResponse.OrderId = service.OrderId;
          }
          else
          {

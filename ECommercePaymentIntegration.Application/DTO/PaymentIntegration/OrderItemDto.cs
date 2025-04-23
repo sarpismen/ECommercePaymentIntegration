@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ECommercePaymentIntegration.Application.DTO.PaymentIntegration
+﻿namespace ECommercePaymentIntegration.Application.DTO.PaymentIntegration
 {
    public class OrderItemDto
    {

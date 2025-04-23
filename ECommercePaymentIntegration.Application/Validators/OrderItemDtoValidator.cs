@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ECommercePaymentIntegration.Application.DTO.PaymentIntegration;
-using ECommercePaymentIntegration.Application.DTO.PaymentIntegration.Requests;
+﻿using ECommercePaymentIntegration.Application.DTO.PaymentIntegration;
 using FluentValidation;
 
 namespace ECommercePaymentIntegration.Application.Validators
 {
-
    internal class OrderItemDtoValidator : AbstractValidator<OrderItemDto>
    {
       public OrderItemDtoValidator()

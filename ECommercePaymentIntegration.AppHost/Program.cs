@@ -11,7 +11,6 @@ namespace ECommercePaymentIntegration.AppHost
 
          var sqlServer = builder.AddSqlServer("PAYINTSQL01", port: 51886).WithLifetime(Aspire.Hosting.ApplicationModel.ContainerLifetime.Persistent);
 
-
          var integrationTestDatabaseName = builder.Configuration.GetValue<string>("IntegrationTestSqlDatabaseName");
 
          var balanceManagementServiceUrl = builder.Configuration.GetValue<string>("BalanceManagementServiceUrl");
@@ -28,6 +27,7 @@ namespace ECommercePaymentIntegration.AppHost
             apiService = apiService.WithReference(integrationSqlDb)
             .WaitFor(integrationSqlDb);
          }
+
          builder.Build().Run();
       }
    }

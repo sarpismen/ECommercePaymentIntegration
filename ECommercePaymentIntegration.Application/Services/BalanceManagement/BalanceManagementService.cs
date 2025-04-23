@@ -25,6 +25,14 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
    {
       private readonly HttpClient _httpClient;
       private readonly ILogger<BalanceManagementService> _logger;
+
+      public BalanceManagementService(IHttpClientFactory httpClientFactory, ILogger<BalanceManagementService> logger)
+      {
+         _httpClient = httpClientFactory.CreateClient(HttpClients.BalanceManagementApi);
+         _httpClient.Timeout = TimeSpan.FromSeconds(1000);
+         _logger = logger;
+      }
+
       private static IEnumerable<HttpStatusCode> TimeoutStatusCodes
       {
          get
@@ -32,13 +40,6 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
             yield return HttpStatusCode.GatewayTimeout;
             yield return HttpStatusCode.RequestTimeout;
          }
-      }
-
-      public BalanceManagementService(IHttpClientFactory httpClientFactory, ILogger<BalanceManagementService> logger)
-      {
-         _httpClient = httpClientFactory.CreateClient(HttpClients.BalanceManagementApi);
-         _httpClient.Timeout = TimeSpan.FromSeconds(1000);
-         _logger = logger;
       }
 
       public async Task<IEnumerable<ProductDto>> GetProductsAsync()
@@ -89,7 +90,6 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
                  });
          var result = await retryPolicy.ExecuteAsync(async () => await HttpOperationAsync<T>(action));
          return result;
-
       }
 
       private async Task<T> HttpOperationAsync<T>(Func<Task<HttpResponseMessage>> action)
@@ -115,6 +115,5 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
             }
          }
       }
-
    }
 }

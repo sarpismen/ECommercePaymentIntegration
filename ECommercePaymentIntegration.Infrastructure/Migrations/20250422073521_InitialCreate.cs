@@ -19,7 +19,7 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
                     CompletedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                     LastUpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false)
+                    Status = table.Column<int>(type: "int", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -34,7 +34,7 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     OrderId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Error = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -55,7 +55,7 @@ namespace ECommercePaymentIntegration.Infrastructure.Migrations
                     OrderId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Quantity = table.Column<int>(type: "int", nullable: false),
                     ProductId = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ItemPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    ItemPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                 },
                 constraints: table =>
                 {

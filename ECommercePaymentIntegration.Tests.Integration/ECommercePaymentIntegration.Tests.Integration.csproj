@@ -26,12 +26,20 @@
     </PackageReference>
     <PackageReference Include="WireMock.Net" />
     <PackageReference Include="WireMock.Net.Abstractions" />
-    <PackageReference Include="WireMock.Net.Aspire"/>
+    <PackageReference Include="WireMock.Net.Aspire" />
     <PackageReference Include="WireMock.Net.RestClient" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" />
+    <PackageReference Include="Polly" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ECommercePaymentIntegration.AppHost\ECommercePaymentIntegration.AppHost.csproj" />
     <ProjectReference Include="..\ECommercePaymentIntegration.Application\ECommercePaymentIntegration.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="coverlet.runsettings">
+      <SubType>Component</SubType>
+    </None>
   </ItemGroup>
 </Project>

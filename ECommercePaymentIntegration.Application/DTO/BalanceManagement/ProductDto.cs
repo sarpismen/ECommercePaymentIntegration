@@ -1,11 +1,4 @@
-﻿using ECommercePaymentIntegration.Application.DTO.BalanceManagement.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ECommercePaymentIntegration.Application.DTO.BalanceManagement
+﻿namespace ECommercePaymentIntegration.Application.DTO.BalanceManagement
 {
    public class ProductDto
    {
@@ -16,6 +9,5 @@ namespace ECommercePaymentIntegration.Application.DTO.BalanceManagement
       public string Category { get; set; }
       public int Stock { get; set; }
       public decimal Price { get; set; }
-
    }
 }
