@@ -19,14 +19,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Aspire.Hosting.AppHost" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="9.2.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Aspire.Hosting.SqlServer" />
-    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" />
-    <PackageReference Include="StyleCop.Analyzers">
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="9.2.0" />
+    <PackageReference Include="Aspire.Microsoft.EntityFrameworkCore.SqlServer" Version="9.2.0" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

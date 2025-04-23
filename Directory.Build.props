@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!--<ItemGroup>
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageVersion Include="Aspire.Hosting.AppHost" Version="9.2.0" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="9.0.0" />
@@ -42,6 +42,6 @@
     <PackageVersion Include="WireMock.Net.RestClient" Version="1.7.4" />
     <PackageVersion Include="WireMock.Net.Aspire" Version="1.7.4" />
     <PackageVersion Include="ReportGenerator" Version="5.4.5" />
-  </ItemGroup>
+  </ItemGroup>-->
 
 </Project>
