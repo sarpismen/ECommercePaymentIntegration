@@ -29,7 +29,7 @@ namespace ECommercePaymentIntegration.ApiService.Controllers
         [ProducesResponseType(typeof(ErrorResponse), 500)]
         public async Task<IEnumerable<ProductDto>> GetProducts()
         {
-            return await _paymentIntegrationService.GetProducts();
+            return await _paymentIntegrationService.GetProductsAsync();
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace ECommercePaymentIntegration.ApiService.Controllers
         [ProducesResponseType(typeof(ErrorResponse), 400)]
         public async Task<ActionResult<PreOrderResultDto>> CreateOrder([FromBody] CreateOrderRequest req)
         {
-            return await _paymentIntegrationService.CreateOrder(req);
+            return await _paymentIntegrationService.CreateOrderAsync(req);
         }
 
         /// <summary>

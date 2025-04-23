@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using ECommercePaymentIntegration.Application.DTO.BalanceManagement;
@@ -39,14 +38,14 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
          _createOrderRequestValidator = createOrderRequestValidator;
       }
 
-      public async Task<IEnumerable<ProductDto>> GetProducts()
+      public async Task<IEnumerable<ProductDto>> GetProductsAsync()
       {
          var allProductDtos = await _balanceManagementService.GetProductsAsync();
          var availableProductDtos = allProductDtos.Where(x => x.Stock > 0);
          return availableProductDtos;
       }
 
-      public async Task<PreOrderResultDto> CreateOrder(CreateOrderRequest req)
+      public async Task<PreOrderResultDto> CreateOrderAsync(CreateOrderRequest req)
       {
          var validation = _createOrderRequestValidator.Validate(req);
          if (!validation.IsValid)
@@ -54,6 +53,88 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
             throw new BadRequestException("Invalid request", validation.ToString(";"));
          }
 
+         Order order = await CreateOrderObjectAsync(req);
+
+         await _orderRepository.AddAsync(order);
+
+         try
+         {
+            return await PreorderAsync(order);
+         }
+         catch (Exception ex)
+         {
+            if (ex is ServiceExceptionBase serviceException)
+            {
+               serviceException.OrderId = order.OrderId;
+            }
+
+            order.Status = OrderStatus.Failed;
+            order.OrderErrors.Add(new OrderError { Error = ex.Message });
+            await _orderRepository.UpdateAsync(order);
+            throw;
+         }
+      }
+
+      public async Task<OrderResultDtoBase> CompleteOrder(CompleteOrderRequest completeOrderRequest)
+      {
+         var validation = _completeOrderRequestValidator.Validate(completeOrderRequest);
+         if (!validation.IsValid)
+         {
+            throw new BadRequestException("Invalid request", validation.ToString(";"));
+         }
+
+         var fallbackPolicy = Policy<OrderResultDtoBase>.Handle<BalanceManagementServiceException>().FallbackAsync(
+            async (_) => await CancelOrderAsync(completeOrderRequest),
+            async (exception) =>
+            {
+               await AddErrorToExistingOrder(completeOrderRequest.OrderId, exception);
+               _logger.LogError($"Error while completing order {completeOrderRequest.OrderId}, cancelling the order", exception);
+            });
+
+         var completeResult = await fallbackPolicy.ExecuteAndCaptureAsync(async () => await CompleteOrderAsync(completeOrderRequest));
+
+         if (completeResult.Outcome == OutcomeType.Failure)
+         {
+            Exception finalException = completeResult.FinalException;
+            if (finalException is ServiceExceptionBase serviceException)
+            {
+               serviceException.OrderId = completeOrderRequest.OrderId;
+            }
+
+            throw finalException;
+         }
+
+         return completeResult.Result;
+      }
+
+      private async Task<OrderResultDtoBase> CompleteOrderAsync(CompleteOrderRequest completeOrderRequest)
+      {
+         OrderResultDto completeOrderResult = await _balanceManagementService.CompleteOrderAsync(completeOrderRequest);
+         await UpdateOrderStatus(completeOrderRequest.OrderId, OrderStatus.Completed);
+         return completeOrderResult;
+      }
+
+      private async Task<OrderResultDtoBase> CancelOrderAsync(CompleteOrderRequest completeOrderRequest)
+      {
+         var cancelOrderResult = await _balanceManagementService.CancelOrderAsync(new CancelOrderRequest { OrderId = completeOrderRequest.OrderId });
+         await UpdateOrderStatus(completeOrderRequest.OrderId, OrderStatus.Cancelled);
+         return cancelOrderResult;
+      }
+
+      private async Task<PreOrderResultDto> PreorderAsync(Order order)
+      {
+         var preorderResult = await _balanceManagementService.PreorderAsync(new PreorderRequest { Amount = order.Total, OrderId = order.OrderId });
+
+         order.Status = OrderStatus.Preordered;
+         order.LastUpdatedAt = DateTime.UtcNow;
+
+         await _orderRepository.UpdateAsync(order);
+
+         return preorderResult;
+      }
+
+      private async Task<Order> CreateOrderObjectAsync(CreateOrderRequest req)
+      {
          var allProductDtos = await _balanceManagementService.GetProductsAsync();
          var allProductsById = allProductDtos.ToDictionary(x => x.Id, x => x);
          var order = new Order
@@ -93,71 +174,7 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
             throw new OutOfStockException("These products are out of stock", string.Join(",", notAvailableProducts.Select(x => x.ProductId)));
          }
 
-         await _orderRepository.AddAsync(order);
-
-         try
-         {
-            var preorderResult = await _balanceManagementService.PreorderAsync(new PreorderRequest { Amount = order.Total, OrderId = order.OrderId });
-
-            order.Status = OrderStatus.Preordered;
-            order.LastUpdatedAt = DateTime.UtcNow;
-
-            await _orderRepository.UpdateAsync(order);
-
-            return preorderResult;
-         }
-         catch (Exception ex)
-         {
-            if (ex is ServiceExceptionBase serviceException)
-            {
-               serviceException.OrderId = order.OrderId;
-            }
-
-            order.Status = OrderStatus.Failed;
-            order.OrderErrors.Add(new OrderError { Error = ex.Message });
-            await _orderRepository.UpdateAsync(order);
-            throw;
-         }
-      }
-
-      public async Task<OrderResultDtoBase> CompleteOrder(CompleteOrderRequest completeOrderRequest)
-      {
-         var validation = _completeOrderRequestValidator.Validate(completeOrderRequest);
-         if (!validation.IsValid)
-         {
-            throw new BadRequestException("Invalid request", validation.ToString(";"));
-         }
-
-         var fallbackPolicy = Policy<OrderResultDtoBase>.Handle<BalanceManagementServiceException>().FallbackAsync(
-            (Func<CancellationToken, Task<OrderResultDtoBase>>)(async (_) =>
-            {
-               var cancelOrderResult = await _balanceManagementService.CancelOrderAsync(new CancelOrderRequest { OrderId = completeOrderRequest.OrderId });
-               await UpdateOrderStatus(completeOrderRequest.OrderId, OrderStatus.Cancelled);
-               return cancelOrderResult;
-            }),
-            async (exception) =>
-            {
-               await AddErrorToExistingOrder(completeOrderRequest.OrderId, exception);
-               _logger.LogError($"Error while completing order {completeOrderRequest.OrderId}, cancelling the order", exception);
-            });
-         var completeResult = await fallbackPolicy.ExecuteAndCaptureAsync(async () =>
-         {
-            OrderResultDto completeOrderResult = await _balanceManagementService.CompleteOrderAsync(completeOrderRequest);
-            await UpdateOrderStatus(completeOrderRequest.OrderId, OrderStatus.Completed);
-            return completeOrderResult;
-         });
-         if (completeResult.Outcome == OutcomeType.Failure)
-         {
-            Exception finalException = completeResult.FinalException;
-            if (finalException is ServiceExceptionBase serviceException)
-            {
-               serviceException.OrderId = completeOrderRequest.OrderId;
-            }
-
-            throw finalException;
-         }
-
-         return completeResult.Result;
+         return order;
       }
 
       private async Task AddErrorToExistingOrder(string orderId, DelegateResult<OrderResultDtoBase> exception)

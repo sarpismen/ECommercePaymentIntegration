@@ -9,7 +9,7 @@ namespace ECommercePaymentIntegration.Application.Interfaces.PaymentIntegration
    public interface IPaymentIntegrationService
    {
       Task<OrderResultDtoBase> CompleteOrder(CompleteOrderRequest completeOrderRequest);
-      Task<PreOrderResultDto> CreateOrder(CreateOrderRequest req);
-      Task<IEnumerable<ProductDto>> GetProducts();
+      Task<PreOrderResultDto> CreateOrderAsync(CreateOrderRequest req);
+      Task<IEnumerable<ProductDto>> GetProductsAsync();
    }
 }

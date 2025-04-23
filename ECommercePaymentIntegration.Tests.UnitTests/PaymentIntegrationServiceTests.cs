@@ -80,7 +80,7 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
          _balanceManagementServiceMock.Setup(x => x.PreorderAsync(It.IsAny<PreorderRequest>())).ThrowsAsync(new BadRequestException());
          _balanceManagementServiceMock.Setup(x => x.GetProductsAsync()).ReturnsAsync(new List<ProductDto>() { new ProductDto { Id = "a", Stock = 1, Price = 1 } });
          _orderRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Order>())).Callback<Order>((order) => addedOrder = order);
-         var createOrderAct = () => _paymentIntegrationService.CreateOrder(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
+         var createOrderAct = () => _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
          await createOrderAct.Should().ThrowAsync<BadRequestException>();
          _orderRepositoryMock.Verify(x => x.AddAsync(It.IsAny<Order>()), Times.Once);
          _orderRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<Order>()), Times.Once);
@@ -92,7 +92,7 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
       public async Task CreateOrder_WhenStockIsInsufficient_ThrowsOutOfStockException()
       {
          _balanceManagementServiceMock.Setup(x => x.GetProductsAsync()).ReturnsAsync(new List<ProductDto>() { new ProductDto { Id = "a", Stock = 0, Price = 1 } });
-         var createOrderAct = () => _paymentIntegrationService.CreateOrder(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
+         var createOrderAct = () => _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
          await createOrderAct.Should().ThrowAsync<OutOfStockException>();
       }
 
@@ -100,7 +100,7 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
       public async Task CreateOrder_ProductDoesntExist_ThrowsNotFoundException()
       {
          _balanceManagementServiceMock.Setup(x => x.GetProductsAsync()).ReturnsAsync(new List<ProductDto>() { new ProductDto { Id = "a", Stock = 1, Price = 1 } });
-         var createOrderAct = () => _paymentIntegrationService.CreateOrder(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "b", Quantity = 1 } } });
+         var createOrderAct = () => _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "b", Quantity = 1 } } });
          await createOrderAct.Should().ThrowAsync<NotFoundException>();
       }
    }
