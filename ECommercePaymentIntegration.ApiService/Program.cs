@@ -51,7 +51,7 @@ namespace ECommercePaymentIntegration.ApiService
          builder.Services.AddHttpClient(HttpClients.BalanceManagementApi, client =>
          {
             client.BaseAddress = new Uri(balanceManagementServiceurl);
-            client.Timeout = TimeSpan.FromSeconds(30);
+            client.Timeout = TimeSpan.FromSeconds(100);
          });
          builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
          builder.Services.AddAutoMapperProfiles();

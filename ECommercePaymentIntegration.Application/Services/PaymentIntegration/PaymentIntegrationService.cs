@@ -125,7 +125,7 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
             throw new BadRequestException("Invalid request", validation.ToString(";"));
          }
          var fallbackPolicy = Policy<OrderResultDtoBase>.Handle<BalanceManagementServiceException>().FallbackAsync(
-            (Func<CancellationToken, Task<OrderResultDtoBase>>)(async (ct) =>
+            (Func<CancellationToken, Task<OrderResultDtoBase>>)(async (_) =>
             {
                var cancelOrderResult = await _balanceManagementService.CancelOrderAsync(new CancelOrderRequest { OrderId = completeOrderRequest.OrderId });
                await UpdateOrderStatus(completeOrderRequest.OrderId, OrderStatus.Cancelled);
@@ -142,7 +142,10 @@ namespace ECommercePaymentIntegration.Application.Services.PaymentIntegration
             await UpdateOrderStatus(completeOrderRequest.OrderId, OrderStatus.Completed);
             return completeOrderResult;
          });
-
+         if (completeResult.Outcome == OutcomeType.Failure)
+         {
+            throw completeResult.FinalException;
+         }
          return completeResult.Result;
       }
 

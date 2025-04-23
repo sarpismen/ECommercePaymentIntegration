@@ -37,6 +37,7 @@ namespace ECommerceApp.Infrastructure.BalanceManagement
       public BalanceManagementService(IHttpClientFactory httpClientFactory, ILogger<BalanceManagementService> logger)
       {
          _httpClient = httpClientFactory.CreateClient(HttpClients.BalanceManagementApi);
+         _httpClient.Timeout = TimeSpan.FromSeconds(1000);
          _logger = logger;
       }
 

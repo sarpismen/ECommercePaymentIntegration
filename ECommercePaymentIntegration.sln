@@ -25,6 +25,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECommercePaymentIntegration.Tests.Integration", "ECommercePaymentIntegration.Tests.Integration\ECommercePaymentIntegration.Tests.Integration.csproj", "{00373428-D1F4-492F-A0A1-BA8F0AD93E88}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECommercePaymentIntegration.Tests.UnitTests", "ECommercePaymentIntegration.Tests.UnitTests\ECommercePaymentIntegration.Tests.UnitTests.csproj", "{55567BC2-8FA5-4E62-ABC7-8D2B0264DECE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,11 +61,16 @@ Global
 		{00373428-D1F4-492F-A0A1-BA8F0AD93E88}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00373428-D1F4-492F-A0A1-BA8F0AD93E88}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00373428-D1F4-492F-A0A1-BA8F0AD93E88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55567BC2-8FA5-4E62-ABC7-8D2B0264DECE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55567BC2-8FA5-4E62-ABC7-8D2B0264DECE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55567BC2-8FA5-4E62-ABC7-8D2B0264DECE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55567BC2-8FA5-4E62-ABC7-8D2B0264DECE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{00373428-D1F4-492F-A0A1-BA8F0AD93E88} = {1909CF47-6548-4B84-89B4-2DB1797173F7}
+		{55567BC2-8FA5-4E62-ABC7-8D2B0264DECE} = {1909CF47-6548-4B84-89B4-2DB1797173F7}
 	EndGlobalSection
 EndGlobal
