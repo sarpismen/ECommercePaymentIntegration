@@ -109,10 +109,10 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
       {
          Order updateOrder = null;
          Order addOrder = null;
-         _balanceManagementServiceMock.Setup(x => x.PreorderAsync(It.IsAny<PreorderRequest>())).ReturnsAsync(() => new PreOrderResultDto { PreOrder = new OrderStatusDto(), UpdatedBalance = new UserBalanceDto()});
+         _balanceManagementServiceMock.Setup(x => x.PreorderAsync(It.IsAny<PreorderRequest>())).ReturnsAsync(() => new PreOrderResultDto { PreOrder = new OrderStatusDto(), UpdatedBalance = new UserBalanceDto() });
          _orderRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>())).ReturnsAsync(() => new Order { Status = OrderStatus.Preordered });
-         _orderRepositoryMock.Setup(x => x.UpdateAsync(It.IsAny<Order>())).Callback<Order>(cb => updateOrder = cb );
-         _orderRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Order>())).Callback<Order>(cb => addOrder = cb); ;
+         _orderRepositoryMock.Setup(x => x.UpdateAsync(It.IsAny<Order>())).Callback<Order>(cb => updateOrder = cb);
+         _orderRepositoryMock.Setup(x => x.AddAsync(It.IsAny<Order>())).Callback<Order>(cb => addOrder = cb);
          _balanceManagementServiceMock.Setup(x => x.GetProductsAsync()).ReturnsAsync(new List<ProductDto>() { new ProductDto { Id = "a", Stock = 1, Price = 1 } });
          var response = await _paymentIntegrationService.CreateOrderAsync(new CreateOrderRequest { Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "a", Quantity = 1 } } });
 
@@ -125,11 +125,12 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
          addOrder.Status.Should().Be(OrderStatus.PendingPreorder);
          response.Should().NotBeNull();
       }
+
       [Test]
       public async Task CompleteOrder_WhenInvoked_ShouldUpdateOrder()
       {
          Order savedOrder = null;
-         _balanceManagementServiceMock.Setup(x => x.CompleteOrderAsync(It.IsAny<CompleteOrderRequest>())).ReturnsAsync(() => new OrderResultDto() { Order = new OrderStatusDto(), UpdatedBalance = new UserBalanceDto()});
+         _balanceManagementServiceMock.Setup(x => x.CompleteOrderAsync(It.IsAny<CompleteOrderRequest>())).ReturnsAsync(() => new OrderResultDto() { Order = new OrderStatusDto(), UpdatedBalance = new UserBalanceDto() });
          _orderRepositoryMock.Setup(x => x.GetByIdAsync(It.IsAny<string>())).ReturnsAsync(() => new Order { Status = OrderStatus.Preordered });
          _orderRepositoryMock.Setup(x => x.UpdateAsync(It.IsAny<Order>())).Callback<Order>((order) => savedOrder = order);
          await _paymentIntegrationService.CompleteOrder(new CompleteOrderRequest { OrderId = "bunuyaparkendepremoldu" });
@@ -138,6 +139,5 @@ namespace ECommercePaymentIntegration.Tests.UnitTests
          savedOrder.Should().NotBeNull();
          savedOrder.Status.Should().Be(OrderStatus.Completed);
       }
-
    }
 }
