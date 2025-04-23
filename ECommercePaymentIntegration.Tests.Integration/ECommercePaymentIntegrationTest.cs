@@ -1,6 +1,5 @@
 ﻿using Aspire.Hosting;
 using Aspire.Hosting.Testing;
-using Azure;
 using ECommerceApp.Infrastructure.BalanceManagement;
 using ECommercePaymentIntegration.Application.DTO.BalanceManagement;
 using ECommercePaymentIntegration.Application.DTO.BalanceManagement.Enums;
@@ -17,6 +16,7 @@ using ECommercePaymentIntegration.Domain.ValueObjects.Order;
 using ECommercePaymentIntegration.Infrastructure;
 using ECommercePaymentIntegration.Tests.Integration.ApplicationFactories;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,6 +33,9 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using WireMock.RequestBuilders;
+using WireMock.ResponseBuilders;
+using WireMock.Server;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace ECommercePaymentIntegration.Tests.Integration
@@ -43,16 +46,29 @@ namespace ECommercePaymentIntegration.Tests.Integration
       private HttpClient _httpClient;
       private BalanceManagementService _balanceManagementService;
       private TestingAspireAppHostFactory _testHost;
+      private WireMockServer _server;
+
+      [OneTimeSetUp]
+      public void OneTimeSetUp()
+      {
+         _server = WireMockServer.Start();
+      }
 
       [SetUp]
       public async Task SetUp()
       {
-
-         _testHost = new TestingAspireAppHostFactory("https://balance-management-pi44.onrender.com");
-
+         var proxyUrl = "https://balance-management-pi44.onrender.com";
+         _server.Given(Request.Create().WithPath("/api/products")).RespondWith(Response.Create().WithProxy(proxyUrl));
+         _server.Given(Request.Create().WithPath("/api/balance")).RespondWith(Response.Create().WithProxy(proxyUrl));
+         _server.Given(Request.Create().WithPath("/api/balance/preorder")).RespondWith(Response.Create().WithProxy(proxyUrl));
+         _server.Given(Request.Create().WithPath("/api/balance/complete")).RespondWith(Response.Create().WithProxy(proxyUrl));
+         _server.Given(Request.Create().WithPath("/api/balance/cancel")).RespondWith(Response.Create().WithProxy(proxyUrl));
+         _testHost = new TestingAspireAppHostFactory(_server.Url);
          await _testHost.StartAsync();
          _dbConnectionString = await _testHost.GetConnectionString("ECommercePaymentIntegrationTest");
-         _httpClient = _testHost.CreateHttpClient("apiservice");
+         var hostHttpClient = _testHost.CreateHttpClient("apiservice");
+         _httpClient = new HttpClient();
+         _httpClient.BaseAddress = hostHttpClient.BaseAddress;
 
 
          var httpClientFactoryMock = new Mock<IHttpClientFactory>();
@@ -124,7 +140,7 @@ namespace ECommercePaymentIntegration.Tests.Integration
 
          var createOrderRequest = new CreateOrderRequest
          {
-            Items = new List<OrderItemDto> { new OrderItemDto { ProductId = product.ProductId, Quantity = 1 }, }
+            Items = new List<OrderItemDto> { new OrderItemDto { ProductId = product.ProductId, Quantity = 1 }, },
          };
 
          var balance = await _balanceManagementService.GetBalanceAsync();
@@ -210,7 +226,7 @@ namespace ECommercePaymentIntegration.Tests.Integration
       [Test]
       public async Task CreateOrderEndpoint_ReturnsNotFound_WhenInvokedNonExistentItem()
       {
-         
+
          var request = new CreateOrderRequest
          {
             Items = new List<OrderItemDto> { new OrderItemDto { ProductId = "unittestyazanrobot", Quantity = 1 }, }
@@ -223,12 +239,50 @@ namespace ECommercePaymentIntegration.Tests.Integration
          orderResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
          orderResponse.Should().NotBeNull();
       }
+      [Test]
+      public async Task CompleteOrder_InvokesCancel_WhenFailed()
+      {
+
+         _server.Given(Request.Create().WithPath("/api/balance/complete")).RespondWith(Response.Create().WithStatusCode(500).WithBodyAsJson(new ServerErrorResponse()));
+         var productsResponse = await _httpClient.GetAsync("/api/products");
+         var products = await productsResponse.Content.ReadFromJsonAsync<IEnumerable<Product>>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
+         var product = products.FirstOrDefault();
+
+         var createOrderRequest = new CreateOrderRequest
+         {
+            Items = new List<OrderItemDto> { new OrderItemDto { ProductId = product.ProductId, Quantity = 1 }, }
+         };
+
+         //var balance = await _balanceManagementService.GetBalanceAsync();
+
+         var orderResponse = await _httpClient.PostAsJsonAsync("/api/orders/create", createOrderRequest, JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
+         var preorderInfo = await orderResponse.Content.ReadFromJsonAsync<PreOrderResultDto>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
+
+         var completeOrderRepsonse = await _httpClient.PostAsJsonAsync($"/api/orders/{preorderInfo.PreOrder.OrderId}/complete", JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
+         var completeOrderInfo = await completeOrderRepsonse.Content.ReadFromJsonAsync<OrderResultDto>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
+
+         completeOrderInfo.Order.Status.Should().Be(PreOrderStatus.Cancelled);
+         using var connection = new SqlConnection(_dbConnectionString);
+         await connection.OpenAsync();
+         using var command = connection.CreateCommand();
+         command.CommandText = $"SELECT Status FROM Orders WHERE OrderId = '{completeOrderInfo.Order.OrderId}'";
+         var orderStatus = (int?)await command.ExecuteScalarAsync();
+         orderStatus.Should().NotBeNull();
+         orderStatus.Should().Be((int)OrderStatus.Cancelled);
+      }
 
       [TearDown]
-      public async Task TearDown()
+      public void TearDown()
       {
+         _testHost.Dispose();
          _httpClient.Dispose();
-         await _testHost.DisposeAsync();
+      }
+
+      [OneTimeTearDown]
+      public void OneTimeTearDown()
+      {
+         _server.Stop();
+         _server.Dispose();
       }
    }
 }
