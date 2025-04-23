@@ -1,0 +1,1 @@
+﻿dotnet test /p:CollectCoverage=true /p:CoverletOutput=../TestResults/ /p:CoverletOutputFormat="json%2ccobertura" /p:MergeWith=../TestResults/coverage.json /p:ThresholdType=branch /p:Threshold=80 /p:ThresholdStat=total
