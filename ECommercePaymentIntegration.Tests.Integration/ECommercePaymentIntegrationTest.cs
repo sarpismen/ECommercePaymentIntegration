@@ -250,10 +250,12 @@ namespace ECommercePaymentIntegration.Tests.Integration
 
          var createOrderRequest = new CreateOrderRequest
          {
-            Items = new List<OrderItemDto> { new OrderItemDto { ProductId = product.ProductId, Quantity = 1 }, }
+            Items = new List<OrderItemDto> { new OrderItemDto { ProductId = product.ProductId, Quantity = 1 }, },
          };
 
-         //var balance = await _balanceManagementService.GetBalanceAsync();
+         var balance = await _balanceManagementService.GetBalanceAsync();
+
+         var expectedAvailableBalance = balance.AvailableBalance - product.ItemPrice;
 
          var orderResponse = await _httpClient.PostAsJsonAsync("/api/orders/create", createOrderRequest, JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
          var preorderInfo = await orderResponse.Content.ReadFromJsonAsync<PreOrderResultDto>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
@@ -262,6 +264,14 @@ namespace ECommercePaymentIntegration.Tests.Integration
          var completeOrderInfo = await completeOrderRepsonse.Content.ReadFromJsonAsync<OrderResultDto>(JsonSerializerSettings.BalanceManagementServiceJsonSerializerOptions);
 
          completeOrderInfo.Order.Status.Should().Be(PreOrderStatus.Cancelled);
+         completeOrderInfo.Should().NotBeNull();
+         completeOrderInfo.Order.Should().NotBeNull();
+         completeOrderInfo.Order.Amount.Should().Be(product.ItemPrice);
+         completeOrderInfo.Order.Status.Should().Be(PreOrderStatus.Cancelled);
+         completeOrderInfo.UpdatedBalance.Should().NotBeNull();
+         completeOrderInfo.UpdatedBalance.BlockedBalance.Should().BeApproximately(preorderInfo.UpdatedBalance.BlockedBalance - product.ItemPrice, 3);
+         completeOrderInfo.UpdatedBalance.AvailableBalance.Should().BeApproximately(balance.AvailableBalance, 3);
+         completeOrderInfo.UpdatedBalance.TotalBalance.Should().BeApproximately(balance.TotalBalance, 3);
          using var connection = new SqlConnection(_dbConnectionString);
          await connection.OpenAsync();
          using var command = connection.CreateCommand();
@@ -269,6 +279,7 @@ namespace ECommercePaymentIntegration.Tests.Integration
          var orderStatus = (int?)await command.ExecuteScalarAsync();
          orderStatus.Should().NotBeNull();
          orderStatus.Should().Be((int)OrderStatus.Cancelled);
+
       }
 
       [TearDown]
